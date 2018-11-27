@@ -45,32 +45,57 @@ if __name__=='__main__':
         plt.show()
 
     # pyramid-arima stepwise parameter grid search
-    from pyramid.arima import auto_arima
-    stepwise_model = auto_arima(data, start_p=1, start_q=1,
-                           max_p=3, max_q=3, m=12,
-                           start_P=0, seasonal=True,
-                           d=1, D=1, trace=True,
-                           error_action='ignore',
-                           suppress_warnings=True,
-                           stepwise=True)
+    train_pyramid_arema = False
+    if train_pyramid_arema:
+        from pyramid.arima import auto_arima
+        stepwise_model = auto_arima(data, start_p=1, start_q=1,
+                               max_p=3, max_q=3, m=12,
+                               start_P=0, seasonal=True,
+                               d=1, D=1, trace=True,
+                               error_action='ignore',
+                               suppress_warnings=True,
+                               stepwise=True)
 
-    print(stepwise_model.aic())
+        print(stepwise_model.aic())
 
-    # train test split
-    splitdate = '2015-12-01'
-    train = data.loc[:splitdate]
-    test = data.loc['2016-01-01':]
+        # train test split
+        splitdate = '2015-12-01'
+        train = data.loc[:splitdate]
+        test = data.loc['2016-01-01':]
 
-    # fit model to training data
-    stepwise_model.fit(train)
+        # fit model to training data
+        stepwise_model.fit(train)
 
-    # predict forecast
-    forecast = stepwise_model.predict(n_periods=len(test))
+        # predict forecast
+        forecast = stepwise_model.predict(n_periods=len(test))
 
-    plot_forecast = False
-    if plot_forecast:
-        plt.plot(test.values, 'k', label='true')
-        plt.plot(forecast, '--b', label='forecast')
-        plt.title('arima forecast')
-        plt.legend()
-        plt.show()
+        plot_forecast = False
+        if plot_forecast:
+            plt.plot(test.values, 'k', label='true')
+            plt.plot(forecast, '--b', label='forecast')
+            plt.title('arima forecast')
+            plt.legend()
+            plt.show()
+
+    # check autocorrelation
+    from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
+
+    def time_series_plot(series, lags, figsize=(8, 6), style='bmh'):
+        ''' requires imports:
+        from statsmodels.graphics.tsaplots import plot_acf, plot_pacf '''
+        with plt.style.context(style):
+            layout = (3,1)
+            ts_ax = plt.subplot2grid(layout, (0,0))
+            acf_ax = plt.subplot2grid(layout, (1,0))
+            pacf_ax = plt.subplot2grid(layout, (2,0))
+
+            ts_ax.plot(data)
+            ts_ax.set_title('Time Series')
+            plot_acf(data, lags=lags, ax=acf_ax, alpha=0.5)
+            plot_pacf(data, lags=lags, ax=pacf_ax, alpha=0.5)
+
+            plt.tight_layout()
+            plt.show()
+        return
+
+    time_series_plot(data.values, lags=50, figsize=(8, 6), style='bmh')
